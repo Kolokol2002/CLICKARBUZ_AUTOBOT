@@ -10,8 +10,7 @@ buttonStartEl.addEventListener('click', onStart);
 
 const [days, hours, minutes, seconds] = valuesEl;
 
-let diferentTime = null;
-let timerId = null;
+let selected = null;
 
 const options = {
   enableTime: true,
@@ -21,17 +20,11 @@ const options = {
 
   onClose(selectedDates) {
     const currentDate = new Date();
-    const selected = selectedDates[0];
+    selected = selectedDates[0];
 
     if (selected.getTime() > currentDate.getTime()) {
       Notify.success('Correct');
-
       buttonStartEl.disabled = false;
-      diferentTime = selected - currentDate;
-      days.textContent = convertMs(diferentTime).days;
-      hours.textContent = convertMs(diferentTime).hours;
-      minutes.textContent = convertMs(diferentTime).minutes;
-      seconds.textContent = convertMs(diferentTime).seconds;
     } else {
       Notify.failure('Not correct');
       buttonStartEl.disabled = true;
@@ -42,19 +35,17 @@ const options = {
 flatpickr(inputEl, options);
 
 function onStart(e) {
-  if (e.target.textContent === 'Start') {
-    e.target.textContent = 'Stop';
-    timerId = setInterval(() => {
-      diferentTime -= 1000;
-      days.textContent = convertMs(diferentTime).days;
-      hours.textContent = convertMs(diferentTime).hours;
-      minutes.textContent = convertMs(diferentTime).minutes;
-      seconds.textContent = convertMs(diferentTime).seconds;
-    }, 1000);
-  } else {
-    e.target.textContent = 'Start';
-    clearInterval(timerId);
-  }
+  e.target.disabled = true;
+
+  const timerId = setInterval(() => {
+    const diferentTime = selected - Date.now();
+    if (diferentTime <= 0) {
+      e.target.disabled = false;
+      clearInterval(timerId);
+      return;
+    }
+    changeTimer(convertMs(diferentTime));
+  }, 1000);
 }
 
 function convertMs(ms) {
@@ -69,4 +60,15 @@ function convertMs(ms) {
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
+}
+
+function changeTimer(obj) {
+  days.textContent = addLeadingZero(obj.days);
+  hours.textContent = addLeadingZero(obj.hours);
+  minutes.textContent = addLeadingZero(obj.minutes);
+  seconds.textContent = addLeadingZero(obj.seconds);
+}
+
+function addLeadingZero(value) {
+  return value.toString().padStart(2, '0');
 }
